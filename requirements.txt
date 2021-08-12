@@ -1,0 +1,7 @@
+PyMuPDF
+pandas
+SQLAlchemy
+psycopg2-binary
+fitz
+numpy
+python-dotenv
