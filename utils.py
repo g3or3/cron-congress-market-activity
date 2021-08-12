@@ -7,6 +7,7 @@ import urllib.request
 import pandas as pd
 import sqlalchemy
 import shutil
+import redis
 import sys
 import os
 import io
@@ -40,6 +41,16 @@ def downloadLatestTxtFile(year):
         return 0
 
     return 1
+
+
+def useRedis():
+    load_dotenv()
+    r = redis.from_url(os.getenv("REDIS_URL"))
+    old = r.get("old")
+    with open("old.txt", "w") as txt_file:
+        txt_file.write(old.decode())
+
+    return r
 
 
 def extractDiffToDf():
@@ -118,7 +129,7 @@ def updateTables(first_name, last_name, doc_id, url):
         print(e)
 
 
-def run():
+def run(redis_client):
     if not downloadLatestTxtFile(datetime.today().year):
         return
 
@@ -134,9 +145,16 @@ def run():
     try:
         engine = connectDb()
         transaction_data.to_sql("record", engine, index=False, if_exists="append")
+
         print("Database records were updated.")
         os.remove("./old.txt")
-        os.rename("./new.txt", "old.txt")
+        redis_client.delete("old")
+
+        with open("./new.txt", "r") as new:
+            redis_client.set("old", str.encode(new.read()))
+
+        os.remove("./new.txt")
+
     except sys.exc_info()[0] as e:
         print(e)
 
