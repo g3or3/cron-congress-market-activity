@@ -83,7 +83,7 @@ def updateTables(first_name, last_name, doc_id, url):
         with engine.connect() as conn:
             result = conn.execute(
                 sqlalchemy.text(
-                    f"select * from person where first_name like '{first_name}' and last_name like '{last_name}'"
+                    f"select * from person where first_name like '%{first_name}%' and last_name like '{last_name}'"
                 )
             ).all()
 
